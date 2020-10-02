@@ -37,6 +37,9 @@ type Maintenance interface {
 	// AlarmList gets all active alarms.
 	AlarmList(ctx context.Context) (*AlarmResponse, error)
 
+	// AlarmArm activates a given alarm
+	AlarmArm(ctx context.Context, m *AlarmMember) (*AlarmResponse, error)
+
 	// AlarmDisarm disarms a given alarm.
 	AlarmDisarm(ctx context.Context, m *AlarmMember) (*AlarmResponse, error)
 
@@ -125,6 +128,20 @@ func (m *maintenance) AlarmList(ctx context.Context) (*AlarmResponse, error) {
 		MemberID: 0,                 // all
 		Alarm:    pb.AlarmType_NONE, // all
 	}
+	resp, err := m.remote.Alarm(ctx, req, m.callOpts...)
+	if err == nil {
+		return (*AlarmResponse)(resp), nil
+	}
+	return nil, toErr(ctx, err)
+}
+
+func (m *maintenance) AlarmArm(ctx context.Context, am *AlarmMember) (*AlarmResponse, error) {
+	req := &pb.AlarmRequest{
+		Action:   pb.AlarmRequest_ACTIVATE,
+		MemberID: am.MemberID,
+		Alarm:    am.Alarm,
+	}
+
 	resp, err := m.remote.Alarm(ctx, req, m.callOpts...)
 	if err == nil {
 		return (*AlarmResponse)(resp), nil
